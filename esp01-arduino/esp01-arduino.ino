@@ -24,11 +24,12 @@ BearSSL::PrivateKey rsaCertpk(AWS_CERT_PRIVATE);
 char buf[BUF_SIZE];
 
 const short topicsLength = 8;
-char topics[topicsLength][128]; // https://docs.aws.amazon.com/iot/latest/developerguide/device-shadow-comms-device.html
+char topics[topicsLength][128];
 
 char topicShadowGetAccepted[128];
 char topicShadowUpdateAccepted[128];
 char topicShadowGet[128];
+char topicShadowUpdate[128];
 
 void switchRelay(bool relayOn)
 {
@@ -44,6 +45,22 @@ void switchRelay(bool relayOn)
       Serial.println("Relay LOW");
     digitalWrite(relayPin, LOW);
   }
+}
+
+void switchRelayState (bool relayOn) {
+  JSONVar reported;
+  reported["on"] = relayOn;
+
+  JSONVar state;
+  state["reported"] = reported;
+
+  JSONVar newShadow;
+  newShadow["state"] = state;
+
+  JSON.stringify(newShadow).toCharArray(buf, BUF_SIZE);
+  Serial.println(buf);
+
+  client.publish(topicShadowUpdate, buf);
 }
 
 void callback(char *topic, byte *payload, unsigned int length)
@@ -90,6 +107,7 @@ void callback(char *topic, byte *payload, unsigned int length)
   }
 }
 
+// Tries to connect back if either WiFi or MQTT are disconnected
 void connect()
 {
   if (WiFi.status() != WL_CONNECTED)
@@ -146,7 +164,7 @@ void setup()
   pinMode(relayPin, OUTPUT);
   digitalWrite(relayPin, HIGH);
 
-  // Add topics
+  // Add topics (https://docs.aws.amazon.com/iot/latest/developerguide/device-shadow-comms-device.htmls)
   sprintf(topics[0], "$aws/things/%s/shadow/delete/accepted", THINGNAME);
   sprintf(topics[1], "$aws/things/%s/shadow/delete/rejected", THINGNAME);
   sprintf(topics[2], "$aws/things/%s/shadow/get/accepted", THINGNAME);
@@ -159,6 +177,7 @@ void setup()
   sprintf(topicShadowGetAccepted, "$aws/things/%s/shadow/get/accepted", THINGNAME);
   sprintf(topicShadowUpdateAccepted, "$aws/things/%s/shadow/update/accepted", THINGNAME);
   sprintf(topicShadowGet, "$aws/things/%s/shadow/get", THINGNAME);
+  sprintf(topicShadowUpdate, "$aws/things/%s/shadow/update", THINGNAME);
 
   // AWS IoT security/credentials
   awsCax509.append(AWS_CERT_CA1);

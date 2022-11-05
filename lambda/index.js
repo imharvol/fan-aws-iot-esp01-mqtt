@@ -20,7 +20,7 @@ exports.handler = async (event) => {
   const client = new IoTDataPlaneClient({})
 
   const updateCommand = new UpdateThingShadowCommand({
-    thingName: 'ventilador',
+    thingName: process.env.THING_NAME,
     payload: Buffer.from(
       JSON.stringify({
         state: {

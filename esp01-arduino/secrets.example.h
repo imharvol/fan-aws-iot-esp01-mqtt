@@ -1,7 +1,7 @@
 #include <pgmspace.h>
 
 #define SECRET
-#define THINGNAME ""
+#define THINGNAME "fan-esp01"
 
 const char WIFI_SSID[] = "";
 const char WIFI_PASSWORD[] = "";
